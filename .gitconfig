@@ -1,0 +1,7 @@
+[gqh]
+	root = ~/ghq
+[init]
+	defaultBranch = main
+[user]
+	email = takei0107.work@gmail.com
+	name = takei0107

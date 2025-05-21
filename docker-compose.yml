@@ -1,0 +1,8 @@
+services:
+  stylua:
+    image: johnnymorganz/stylua
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+    command: [./stylua, --glob, '**/*.lua', --, .]
