@@ -89,8 +89,15 @@ setup_zoxide() {
   fi
 }
 
+setup_starship() {
+  if check_bin "starship" ; then
+    eval "$(starship init bash)"
+  fi
+}
+
 setup_mise
 setup_zoxide
+setup_starship
 
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases

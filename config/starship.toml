@@ -1,0 +1,51 @@
+format = '$all- $shell $status$line_break$character'
+
+scan_timeout = 50
+command_timeout = 500
+
+add_newline = true
+
+# for bash, ble.sh >= 0.4 is required.
+right_format = ""
+
+follow_symlinks = true
+
+[singularity]
+disabled = true
+
+[directory]
+truncate_to_repo = false
+truncation_length = 99
+truncation_symbol = '../'
+
+[vcsh]
+disabled = true
+
+[git_commit]
+only_detached = true
+
+[line_break]
+disabled = false
+
+[jobs]
+number_threshold = 1
+
+[battery]
+disabled = true
+
+[status]
+disabled = false
+success_style = "bold green"
+success_symbol = "👍"
+
+[container]
+disabled = true
+
+[netns]
+disabled = true
+
+[shell]
+disabled = false
+bash_indicator = "bash"
+fish_indicator = "fish"
+format = "<[$indicator]($style)>"
