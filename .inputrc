@@ -1,0 +1,9 @@
+set bell-style none
+
+set editing-mode vi
+set show-mode-in-prompt on
+
+$if mode=vi
+  j:history-search-forward
+  k:history-search-backward
+$endif

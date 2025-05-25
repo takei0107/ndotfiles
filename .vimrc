@@ -45,12 +45,12 @@ set wildoptions=pum
 set ruler
 set laststatus=2
 
+set smarttab
 set expandtab
 set tabstop=2
 set shiftwidth=0
 set softtabstop=-1
 set smartindent
-set smarttab
 
 if has("termguicolors")
   set termguicolors

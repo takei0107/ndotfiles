@@ -7,7 +7,7 @@ HOME = $(shell echo $$HOME)
 
 all: to_home to_config
 
-to_home: .bash_aliases .bash_profile .bashrc .gitconfig .vimrc
+to_home: .bash_aliases .bash_profile .bashrc .gitconfig .vimrc .inputrc
 	for target in $^ ; \
 	do \
 		ln -sfv $(addprefix $(PWD)/, $$target) $(addprefix $(HOME)/, $$target) ; \
