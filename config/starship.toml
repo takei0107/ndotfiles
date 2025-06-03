@@ -10,6 +10,13 @@ right_format = ""
 
 follow_symlinks = true
 
+[username]
+show_always = true
+format = '[$user]($style)@'
+
+[hostname]
+ssh_only = false
+
 [singularity]
 disabled = true
 
