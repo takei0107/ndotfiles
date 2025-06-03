@@ -1,4 +1,4 @@
-# m-dotfiles
+# ndotfiles
 
 ## install
 
