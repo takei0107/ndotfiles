@@ -8,7 +8,6 @@ HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=20000
 
-
 check_bin() {
   type "$1" > /dev/null 2>&1
 }
@@ -60,3 +59,6 @@ setup_starship
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
+
+# disable bash-completion
+complete -r
