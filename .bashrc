@@ -52,9 +52,17 @@ setup_starship() {
   fi
 }
 
-setup_mise
-setup_zoxide
-setup_starship
+setup_mise && unset setup_mise
+setup_zoxide && unset setup_zoxide
+setup_starship && unset setup_starship
+
+repos() {
+  if check_bin "ghq" && check_bin "fzf" ; then
+    cd $(ghq list --full-path | fzf)
+  else
+    echo "ghq or fzf not found"
+  fi
+}
 
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
