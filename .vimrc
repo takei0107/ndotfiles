@@ -63,4 +63,9 @@ endif
 
 nnoremap <silent> <ESC><ESC> :nohlsearch<CR>
 
+augroup c
+  autocmd!
+  autocmd FileType c setlocal tabstop=4
+augroup END
+
 filetype plugin indent on
