@@ -41,7 +41,10 @@ set splitbelow
 set hlsearch
 set incsearch
 
+set wildmenu
 set wildoptions=pum
+set wildmode=full
+
 set ruler
 set laststatus=2
 
