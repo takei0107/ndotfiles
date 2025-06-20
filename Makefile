@@ -3,7 +3,7 @@ SHELL = /bin/bash
 PWD = $(shell pwd)
 HOME = $(shell echo $$HOME)
 
-.PHONY: all to_home to_config
+.PHONY: all to_home to_config stylua
 
 all: to_home to_config
 
@@ -19,3 +19,6 @@ to_config: config/*
 		base=$$(basename $$target) ; \
 		ln -sfnv $(addprefix $(PWD)/config/, $$base) $(addprefix $(HOME)/.config/, $$base) ; \
 	done
+
+stylua:
+	docker compose run stylua
