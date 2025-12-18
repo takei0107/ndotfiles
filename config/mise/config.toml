@@ -1,10 +1,7 @@
 [tools]
 lazygit = "latest"
-ripgrep = "latest"
 fzf = "latest"
 ghq = "latest"
-fd = "latest"
 jq = "latest"
-bat = "latest"
 starship = "latest"
 gh = "latest"
