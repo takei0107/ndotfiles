@@ -48,6 +48,9 @@ set wildmode=full
 set ruler
 set laststatus=2
 
+set cursorline
+set cursorcolumn
+
 set smarttab
 set expandtab
 set tabstop=2
