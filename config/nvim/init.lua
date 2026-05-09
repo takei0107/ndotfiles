@@ -60,6 +60,26 @@ end
 
 vim.keymap.set('n', '<C-[><C-[>', ':nohlsearch<CR>', {silent=true})
 
+local function enabled_clipboard()
+  local function is_wayland()
+    return vim.env.WAYLAND_DISPLAY ~= nil and vim.env.WAYLAND_DISPLAY ~= ''
+  end
+  local function has_wl_clipboard()
+    return vim.fn.executable('wl-copy') == 1 and vim.fn.executable('wl-paste') == 1
+  end
+
+  local function set_wl_copy()
+    vim.g.clipboard = 'wl-copy'
+  end
+
+  if is_wayland() then
+    if has_wl_clipboard() then
+      set_wl_copy()
+    end
+  end
+end
+enabled_clipboard()
+
 local function define_auto_mkdir()
   local gid = vim.api.nvim_create_augroup('vimrc_auto_mkdir', {})
   local function auto_mkdir(dir, force)
