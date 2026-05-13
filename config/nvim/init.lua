@@ -45,6 +45,8 @@ vim.o.cursorcolumn = true
 vim.o.winborder = 'single'
 vim.o.pumborder = 'single'
 
+vim.opt.completeopt = {'menu', 'noselect', 'popup'}
+
 vim.o.smarttab = true
 vim.o.expandtab = true
 vim.o.tabstop = 2
@@ -158,23 +160,62 @@ setup_plugins()
 
 
 local function lsp_settings()
-  vim.lsp.config('lua_ls', {
-    settings = {
-      Lua = {
-        runtime = {
-          version = "LuaJIT",
-          pathStrict = true,
-          path = { "?.lua", "?/init.lua" },
-        },
-        workspace = {
-          library = vim.list_extend(vim.api.nvim_get_runtime_file("lua", true), {
-            "${3rd}/luv/library",
-          }),
-          checkThirdParty = "Disable",
+  local function completion_enable(client_id, bufnr)
+    vim.lsp.completion.enable(true, client_id, bufnr, {
+      autotrigger = true,
+      convert = function(item)
+        return { abbr = item.label:gsub('%b()', '') }
+      end,
+    })
+  end
+  
+
+  local function all_client_setting()
+    vim.lsp.config('*', {
+      on_attach = function(client, bufnr)
+        completion_enable(client.id, bufnr)
+        vim.keymap.set('i', '<C-n>', function()
+          if vim.fn.pumvisible() == 1 then
+            local key = vim.api.nvim_replace_termcodes('<C-n>', true, false, true)
+            vim.api.nvim_feedkeys(key, 'i', false)
+          else
+            vim.lsp.completion.get()
+          end
+        end, {
+          buf = bufnr,
+          silent = true
+        })
+      end
+    })
+  end
+
+  local function lua_ls_setting()
+    vim.lsp.config('lua_ls', {
+      settings = {
+        Lua = {
+          runtime = {
+            version = "LuaJIT",
+            pathStrict = true,
+            path = { "?.lua", "?/init.lua" },
+          },
+          workspace = {
+            library = vim.list_extend(vim.api.nvim_get_runtime_file("lua", true), {
+              "${3rd}/luv/library",
+            }),
+            checkThirdParty = "Disable",
+          },
         },
       },
-    },
+    })
+  end
+
+  vim.diagnostic.config({
+    virtual_text = true
   })
+
+  all_client_setting()
+  lua_ls_setting()
+
   vim.lsp.enable('lua_ls')
 end
 lsp_settings()
