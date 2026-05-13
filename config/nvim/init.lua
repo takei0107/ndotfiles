@@ -42,6 +42,9 @@ vim.o.laststatus = 2
 vim.o.cursorline = true
 vim.o.cursorcolumn = true
 
+vim.o.winborder = 'single'
+vim.o.pumborder = 'single'
+
 vim.o.smarttab = true
 vim.o.expandtab = true
 vim.o.tabstop = 2
@@ -59,6 +62,7 @@ if vim.fn.has('termguicolors') then
 end
 
 vim.keymap.set('n', '<C-[><C-[>', ':nohlsearch<CR>', {silent=true})
+
 
 local function enabled_clipboard()
   local function is_wayland()
@@ -79,6 +83,7 @@ local function enabled_clipboard()
   end
 end
 enabled_clipboard()
+
 
 local function define_auto_mkdir()
   local gid = vim.api.nvim_create_augroup('vimrc_auto_mkdir', {})
@@ -101,6 +106,82 @@ local function define_auto_mkdir()
 end
 define_auto_mkdir()
 
+
+local function vim_pack(configs)
+  local default_opts = {
+    confirm = false
+  }
+
+  local itr = vim.iter(configs)
+  itr:each(function(config)
+    local opts = config.opts and vim.tbl_extend('force', default_opts, config.opts) or default_opts
+
+    vim.pack.add({
+      config.spec
+    }, opts)
+
+    if config.init and type(config.init) == 'function' then
+      config.init()
+    end
+  end)
+end
+
+
+local function setup_plugins()
+  local github = function(x) return 'https://github.com/' .. x end
+
+  local function install()
+    vim_pack({
+      {
+        spec = github('neovim/nvim-lspconfig.git')
+      },
+      {
+        spec = github('mason-org/mason.nvim.git'),
+        init = function()
+          require('mason').setup()
+        end
+      },
+      {
+        spec = github('mason-org/mason-lspconfig.nvim.git'),
+        init = function()
+          require('mason-lspconfig').setup({
+            ensure_installed = {'lua_ls'},
+          })
+        end
+      },
+    })
+  end
+
+  install()
+end
+setup_plugins()
+
+
+local function lsp_settings()
+  vim.lsp.config('lua_ls', {
+    settings = {
+      Lua = {
+        runtime = {
+          version = "LuaJIT",
+          pathStrict = true,
+          path = { "?.lua", "?/init.lua" },
+        },
+        workspace = {
+          library = vim.list_extend(vim.api.nvim_get_runtime_file("lua", true), {
+            "${3rd}/luv/library",
+            "${3rd}/busted/library",
+            "${3rd}/luassert/library",
+          }),
+          checkThirdParty = "Disable",
+        },
+      },
+    },
+  })
+  vim.lsp.enable('lua_ls')
+end
+lsp_settings()
+
+
 local function define_c_style()
   local gid = vim.api.nvim_create_augroup('c', {})
   vim.api.nvim_create_autocmd('FileType', {
@@ -110,6 +191,7 @@ local function define_c_style()
   })
 end
 define_c_style()
+
 
 vim.cmd('filetype plugin indent on')
 
