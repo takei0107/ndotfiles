@@ -172,6 +172,9 @@ local function setup_plugins()
         spec = github("mason-org/mason-lspconfig.nvim.git"),
         init = function()
           require("mason-lspconfig").setup({
+            -- [prerequisites]
+            -- - pip, venv (for pylsp)
+            --   - $ sudo apt install --no-install-recommends python3-pip python3-venv
             ensure_installed = { "efm", "lua_ls", "pylsp" },
           })
         end,
