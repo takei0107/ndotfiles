@@ -1,5 +1,9 @@
 {
   "plugins": {
+    "efmls-configs-nvim": {
+      "rev": "5dc52088c231f2721f545570fcb541b04802ce6b",
+      "src": "https://github.com/creativenull/efmls-configs-nvim"
+    },
     "lexima.vim": {
       "rev": "ab621e4756465c9d354fce88cff2bd1aa7887065",
       "src": "https://github.com/cohama/lexima.vim.git"

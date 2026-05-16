@@ -12,11 +12,11 @@ local function disable_rtp_plugins()
 end
 disable_rtp_plugins()
 
-vim.cmd('syntax enable')
+vim.cmd("syntax enable")
 
 vim.o.compatible = false
-vim.o.belloff = 'all'
-vim.o.mouse = ''
+vim.o.belloff = "all"
+vim.o.mouse = ""
 
 local function setup_recovery_files()
   vim.o.swapfile = false
@@ -33,8 +33,8 @@ vim.o.hlsearch = true
 vim.o.incsearch = true
 
 vim.o.wildmenu = true
-vim.o.wildoptions = 'pum'
-vim.o.wildmode = 'full'
+vim.o.wildoptions = "pum"
+vim.o.wildmode = "full"
 
 vim.o.ruler = true
 vim.o.laststatus = 2
@@ -42,10 +42,10 @@ vim.o.laststatus = 2
 vim.o.cursorline = true
 vim.o.cursorcolumn = true
 
-vim.o.winborder = 'single'
-vim.o.pumborder = 'single'
+vim.o.winborder = "single"
+vim.o.pumborder = "single"
 
-vim.opt.completeopt = {'menu', 'noselect', 'popup'}
+vim.opt.completeopt = { "menu", "noselect", "popup" }
 
 vim.o.smarttab = true
 vim.o.expandtab = true
@@ -54,28 +54,27 @@ vim.o.shiftwidth = 0
 vim.o.softtabstop = -1
 vim.o.smartindent = true
 
-if vim.fn.has('termguicolors') then
+if vim.fn.has("termguicolors") then
   vim.o.termguicolors = true
-  vim.cmd('colorscheme industry')
-  vim.cmd('highlight Normal guibg=NONE')
-  vim.cmd('highlight NonText guibg=NONE')
-  vim.cmd('highlight EndOfBuffer guibg=NONE')
-  vim.cmd('highlight LineNr guibg=NONE')
+  vim.cmd("colorscheme industry")
+  vim.cmd("highlight Normal guibg=NONE")
+  vim.cmd("highlight NonText guibg=NONE")
+  vim.cmd("highlight EndOfBuffer guibg=NONE")
+  vim.cmd("highlight LineNr guibg=NONE")
 end
 
-vim.keymap.set('n', '<C-[><C-[>', ':nohlsearch<CR>', {silent=true})
-
+vim.keymap.set("n", "<C-[><C-[>", ":nohlsearch<CR>", { silent = true })
 
 local function enabled_clipboard()
   local function is_wayland()
-    return vim.env.WAYLAND_DISPLAY ~= nil and vim.env.WAYLAND_DISPLAY ~= ''
+    return vim.env.WAYLAND_DISPLAY ~= nil and vim.env.WAYLAND_DISPLAY ~= ""
   end
   local function has_wl_clipboard()
-    return vim.fn.executable('wl-copy') == 1 and vim.fn.executable('wl-paste') == 1
+    return vim.fn.executable("wl-copy") == 1 and vim.fn.executable("wl-paste") == 1
   end
 
   local function set_wl_copy()
-    vim.g.clipboard = 'wl-copy'
+    vim.g.clipboard = "wl-copy"
   end
 
   if is_wayland() then
@@ -86,151 +85,225 @@ local function enabled_clipboard()
 end
 enabled_clipboard()
 
-
 local function define_auto_mkdir()
-  local gid = vim.api.nvim_create_augroup('vimrc_auto_mkdir', {})
+  local gid = vim.api.nvim_create_augroup("vimrc_auto_mkdir", {})
   local function auto_mkdir(dir, force)
     local function prompt(dir)
       local ans = vim.fn.confirm(string.format('"%s" does not exist. Create?', dir), "&Yes\n&No")
       return ans == 1
     end
     if vim.fn.isdirectory(dir) == 0 and (force or prompt(dir)) then
-      vim.fn.mkdir(vim.fn.iconv(dir, vim.o.encoding, vim.o.termencoding), 'p')
+      vim.fn.mkdir(vim.fn.iconv(dir, vim.o.encoding, vim.o.termencoding), "p")
     end
   end
-  vim.api.nvim_create_autocmd('BufWritePre', {
-    pattern = '*',
+  vim.api.nvim_create_autocmd("BufWritePre", {
+    pattern = "*",
     group = gid,
     callback = function(ev)
       auto_mkdir(vim.fn.expand(vim.fs.dirname(ev.file)), vim.v.cmdbang == 1)
-    end
+    end,
   })
 end
 define_auto_mkdir()
 
-
 local function vim_pack(configs)
   local default_opts = {
-    confirm = false
+    confirm = false,
   }
 
   local itr = vim.iter(configs)
   itr:each(function(config)
-    local opts = config.opts and vim.tbl_extend('force', default_opts, config.opts) or default_opts
+    local opts = config.opts and vim.tbl_extend("force", default_opts, config.opts) or default_opts
 
     vim.pack.add({
-      config.spec
+      config.spec,
     }, opts)
 
-    if config.init and type(config.init) == 'function' then
+    if config.init and type(config.init) == "function" then
       config.init()
     end
   end)
 end
 
-
+local efm_enabled = nil
 local function setup_plugins()
-  local github = function(x) return 'https://github.com/' .. x end
+  local github = function(x)
+    return "https://github.com/" .. x
+  end
 
   local function install()
     vim_pack({
       {
-        spec = github('neovim/nvim-lspconfig.git')
+        spec = github("neovim/nvim-lspconfig.git"),
       },
       {
-        spec = github('mason-org/mason.nvim.git'),
+        spec = github("mason-org/mason.nvim.git"),
         init = function()
-          require('mason').setup()
-        end
-      },
-      {
-        spec = github('mason-org/mason-lspconfig.nvim.git'),
-        init = function()
-          require('mason-lspconfig').setup({
-            ensure_installed = {'lua_ls'},
+          require("mason").setup()
+
+          local function install_required()
+            local mason_registry = require("mason-registry")
+
+            local required_packages = {
+              "stylua",
+            }
+
+            local packages = vim
+              .iter(required_packages)
+              :filter(function(p)
+                return not mason_registry.is_installed(p)
+              end)
+              :join(" ")
+
+            vim.cmd((":MasonInstall %s"):format(packages))
+          end
+
+          vim.api.nvim_create_autocmd("VimEnter", {
+            pattern = "*",
+            callback = function()
+              install_required()
+            end,
           })
-        end
+        end,
       },
       {
-        spec = github('cohama/lexima.vim.git')
-      },
-      {
-        spec = github('nvim-mini/mini.pick'),
+        spec = github("mason-org/mason-lspconfig.nvim.git"),
         init = function()
-          local minipick = require('mini.pick')
+          require("mason-lspconfig").setup({
+            ensure_installed = { "efm", "lua_ls" },
+          })
+        end,
+      },
+      {
+        spec = github("creativenull/efmls-configs-nvim"),
+        init = function()
+          efm_enabled = function()
+            local stylua = require("efmls-configs.formatters.stylua")
+
+            local languages = {
+              lua = { stylua },
+            }
+
+            local config = {
+              filetypes = vim.tbl_keys(languages),
+              settings = {
+                languages = languages,
+              },
+              init_options = {
+                documentFormatting = true,
+                documentRangeFormatting = true,
+              },
+            }
+
+            vim.lsp.config("efm", config)
+            vim.lsp.enable("efm")
+
+            local lsp_fmt_group = vim.api.nvim_create_augroup("LspFormattingGroup", {})
+            vim.api.nvim_create_autocmd("BufWritePost", {
+              group = lsp_fmt_group,
+              callback = function(ev)
+                local efm = vim.lsp.get_clients({ name = "efm", bufnr = ev.buf })
+
+                if vim.tbl_isempty(efm) then
+                  return
+                end
+
+                vim.lsp.buf.format({ name = "efm" })
+              end,
+            })
+          end
+        end,
+      },
+      {
+        spec = github("cohama/lexima.vim.git"),
+      },
+      {
+        spec = github("nvim-mini/mini.pick"),
+        init = function()
+          local minipick = require("mini.pick")
           minipick.setup({
             source = {
-              show = minipick.default_show
+              show = minipick.default_show,
             },
             mappings = {
-              delete_char = '<C-h>',
-              move_down = '<C-j>',
-              move_up = '<C-k>',
-              scroll_left = '<M-h>',
-              scroll_right = '<M-l>'
-            }
+              delete_char = "<C-h>",
+              move_down = "<C-j>",
+              move_up = "<C-k>",
+              scroll_left = "<M-h>",
+              scroll_right = "<M-l>",
+            },
           })
-          vim.keymap.set('n', '<C-p>', function()
+          vim.keymap.set("n", "<C-p>", function()
             minipick.builtin.files()
           end)
-        end
-      }
+        end,
+      },
     })
   end
 
   local function remove()
-    local deleted_specs = vim.iter(vim.pack.get())
-        :filter(function(x) return not x.active end)
-        :map(function(x) return x.spec end)
-        :filter(function(spec)
-          return vim.fn.confirm(('really remove this plugin? name = %s, src = %s'):format(spec.name, spec.src), "&Yes\n&No") == 1
-        end)
-        :totable()
+    local deleted_specs = vim
+      .iter(vim.pack.get())
+      :filter(function(x)
+        return not x.active
+      end)
+      :map(function(x)
+        return x.spec
+      end)
+      :filter(function(spec)
+        return vim.fn.confirm(
+          ("really remove this plugin? name = %s, src = %s"):format(spec.name, spec.src),
+          "&Yes\n&No"
+        ) == 1
+      end)
+      :totable()
 
     if #deleted_specs > 0 then
-      vim.pack.del(vim.iter(deleted_specs):map(function(spec) return spec.name end):totable())
+      vim.pack.del(vim
+        .iter(deleted_specs)
+        :map(function(spec)
+          return spec.name
+        end)
+        :totable())
     end
   end
 
   install()
   remove()
-
 end
 setup_plugins()
 
-
-local function lsp_settings()
+local function setup_lsp()
   local function completion_enable(client_id, bufnr)
     vim.lsp.completion.enable(true, client_id, bufnr, {
       autotrigger = true,
       convert = function(item)
-        return { abbr = item.label:gsub('%b()', '') }
+        return { abbr = item.label:gsub("%b()", "") }
       end,
     })
   end
 
-
   local function all_client_setting()
-    vim.lsp.config('*', {
+    vim.lsp.config("*", {
       on_attach = function(client, bufnr)
         completion_enable(client.id, bufnr)
-        vim.keymap.set('i', '<C-n>', function()
+        vim.keymap.set("i", "<C-n>", function()
           if vim.fn.pumvisible() == 1 then
-            local key = vim.api.nvim_replace_termcodes('<C-n>', true, false, true)
-            vim.api.nvim_feedkeys(key, 'i', false)
+            local key = vim.api.nvim_replace_termcodes("<C-n>", true, false, true)
+            vim.api.nvim_feedkeys(key, "i", false)
           else
             vim.lsp.completion.get()
           end
         end, {
           buf = bufnr,
-          silent = true
+          silent = true,
         })
-      end
+      end,
     })
   end
 
   local function lua_ls_setting()
-    vim.lsp.config('lua_ls', {
+    vim.lsp.config("lua_ls", {
       settings = {
         Lua = {
           runtime = {
@@ -251,30 +324,30 @@ local function lsp_settings()
 
   local function lua_ls()
     lua_ls_setting()
-    vim.lsp.enable('lua_ls')
+    vim.lsp.enable("lua_ls")
   end
 
   vim.diagnostic.config({
-    virtual_text = true
+    virtual_text = true,
   })
 
   all_client_setting()
   lua_ls()
 
+  if efm_enabled ~= nil and type(efm_enabled) == "function" then
+    efm_enabled()
+  end
 end
-lsp_settings()
-
+setup_lsp()
 
 local function define_c_style()
-  local gid = vim.api.nvim_create_augroup('c', {})
-  vim.api.nvim_create_autocmd('FileType', {
-    pattern = 'c',
+  local gid = vim.api.nvim_create_augroup("c", {})
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "c",
     group = gid,
-    command = 'setlocal tabstop=4'
+    command = "setlocal tabstop=4",
   })
 end
 define_c_style()
 
-
-vim.cmd('filetype plugin indent on')
-
+vim.cmd("filetype plugin indent on")
