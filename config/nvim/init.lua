@@ -151,6 +151,30 @@ local function setup_plugins()
           })
         end
       },
+      {
+        spec = github('cohama/lexima.vim.git')
+      },
+      {
+        spec = github('nvim-mini/mini.pick'),
+        init = function()
+          local minipick = require('mini.pick')
+          minipick.setup({
+            source = {
+              show = minipick.default_show
+            },
+            mappings = {
+              delete_char = '<C-h>',
+              move_down = '<C-j>',
+              move_up = '<C-k>',
+              scroll_left = '<M-h>',
+              scroll_right = '<M-l>'
+            }
+          })
+          vim.keymap.set('n', '<C-p>', function()
+            minipick.builtin.files()
+          end)
+        end
+      }
     })
   end
 
@@ -168,7 +192,7 @@ local function lsp_settings()
       end,
     })
   end
-  
+
 
   local function all_client_setting()
     vim.lsp.config('*', {
@@ -209,14 +233,18 @@ local function lsp_settings()
     })
   end
 
+  local function lua_ls()
+    lua_ls_setting()
+    vim.lsp.enable('lua_ls')
+  end
+
   vim.diagnostic.config({
     virtual_text = true
   })
 
   all_client_setting()
-  lua_ls_setting()
+  lua_ls()
 
-  vim.lsp.enable('lua_ls')
 end
 lsp_settings()
 
