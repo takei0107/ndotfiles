@@ -178,7 +178,23 @@ local function setup_plugins()
     })
   end
 
+  local function remove()
+    local deleted_specs = vim.iter(vim.pack.get())
+        :filter(function(x) return not x.active end)
+        :map(function(x) return x.spec end)
+        :filter(function(spec)
+          return vim.fn.confirm(('really remove this plugin? name = %s, src = %s'):format(spec.name, spec.src), "&Yes\n&No") == 1
+        end)
+        :totable()
+
+    if #deleted_specs > 0 then
+      vim.pack.del(vim.iter(deleted_specs):map(function(spec) return spec.name end):totable())
+    end
+  end
+
   install()
+  remove()
+
 end
 setup_plugins()
 
