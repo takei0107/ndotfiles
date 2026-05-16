@@ -172,7 +172,7 @@ local function setup_plugins()
         spec = github("mason-org/mason-lspconfig.nvim.git"),
         init = function()
           require("mason-lspconfig").setup({
-            ensure_installed = { "efm", "lua_ls" },
+            ensure_installed = { "efm", "lua_ls", "pylsp" },
           })
         end,
       },
@@ -329,12 +329,17 @@ local function setup_lsp()
     vim.lsp.enable("lua_ls")
   end
 
+  local function pylsp()
+    vim.lsp.enable("pylsp")
+  end
+
   vim.diagnostic.config({
     virtual_text = true,
   })
 
   all_client_setting()
   lua_ls()
+  pylsp()
 
   if efm_enabled ~= nil and type(efm_enabled) == "function" then
     efm_enabled()
