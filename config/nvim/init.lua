@@ -148,14 +148,16 @@ local function setup_plugins()
               "stylua",
             }
 
-            local packages = vim
+            local packages_installed = vim
               .iter(required_packages)
               :filter(function(p)
                 return not mason_registry.is_installed(p)
               end)
               :join(" ")
 
-            vim.cmd((":MasonInstall %s"):format(packages))
+            if packages_installed ~= "" then
+              vim.cmd((":MasonInstall %s"):format(packages_installed))
+            end
           end
 
           vim.api.nvim_create_autocmd("VimEnter", {
