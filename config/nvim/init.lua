@@ -1,16 +1,16 @@
 local function disable_rtp_plugins()
-  vim.g.loaded_tutor_mode_plugin = 1
+  vim.g.loaded_2html_plugin = 1
   vim.g.loaded_getscriptPlugin = 1
   vim.g.loaded_gzip = 1
   vim.g.loaded_logiPat = 1
+  vim.g.loaded_netrw = 1
   vim.g.loaded_rrhelper = 1
   vim.g.loaded_spellfile_plugin = 1
   vim.g.loaded_tarPlugin = 1
-  vim.g.loaded_2html_plugin = 1
+  vim.g.loaded_tutor_mode_plugin = 1
   vim.g.loaded_vimballPlugin = 1
   vim.g.loaded_zipPlugin = 1
 end
-disable_rtp_plugins()
 
 local function set_vim_opts()
   vim.o.compatible = false
@@ -69,10 +69,11 @@ local function set_keymaps()
   vim.keymap.set("n", "<C-[><C-[>", ":nohlsearch<CR>", { silent = true })
 end
 
+local function is_wayland()
+  return vim.fn.empty(vim.env.WAYLAND_DISPLAY) == 0
+end
+
 local function enabled_clipboard()
-  local function is_wayland()
-    return vim.env.WAYLAND_DISPLAY ~= nil and vim.env.WAYLAND_DISPLAY ~= ""
-  end
   local function has_wl_clipboard()
     return vim.fn.executable("wl-copy") == 1 and vim.fn.executable("wl-paste") == 1
   end
@@ -121,7 +122,7 @@ local function vim_pack(configs)
       config.spec,
     }, opts)
 
-    if config.init and type(config.init) == "function" then
+    if vim.is_callable(config.init) then
       config.init()
     end
   end)
@@ -361,6 +362,8 @@ local function define_c_style()
 end
 
 local function main()
+  disable_rtp_plugins()
+
   vim.cmd("syntax enable")
 
   -- basic opts, theme, keymaps, tools and customizes
@@ -373,7 +376,7 @@ local function main()
   -- lsp and diagnostic
   local m = setup_plugins() or {}
   setup_lsp()
-  if m.efm_enabled ~= nil and type(m.efm_enabled) == "function" then
+  if vim.is_callable(m.efm_enabled) then
     m.efm_enabled()
   end
   setup_diagnostic()
