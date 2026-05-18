@@ -12,58 +12,62 @@ local function disable_rtp_plugins()
 end
 disable_rtp_plugins()
 
-vim.cmd("syntax enable")
+local function set_vim_opts()
+  vim.o.compatible = false
+  vim.o.belloff = "all"
+  vim.o.mouse = ""
 
-vim.o.compatible = false
-vim.o.belloff = "all"
-vim.o.mouse = ""
+  local function setup_recovery_files()
+    vim.o.swapfile = false
+    vim.o.backup = false
+    vim.o.undofile = true
+  end
+  setup_recovery_files()
 
-local function setup_recovery_files()
-  vim.o.swapfile = false
-  vim.o.backup = false
-  vim.o.undofile = true
-end
-setup_recovery_files()
+  vim.o.number = true
+  vim.o.splitright = true
+  vim.o.splitbelow = true
 
-vim.o.number = true
-vim.o.splitright = true
-vim.o.splitbelow = true
+  vim.o.hlsearch = true
+  vim.o.incsearch = true
 
-vim.o.hlsearch = true
-vim.o.incsearch = true
+  vim.o.wildmenu = true
+  vim.o.wildoptions = "pum"
+  vim.o.wildmode = "full"
 
-vim.o.wildmenu = true
-vim.o.wildoptions = "pum"
-vim.o.wildmode = "full"
+  vim.o.ruler = true
+  vim.o.laststatus = 2
 
-vim.o.ruler = true
-vim.o.laststatus = 2
+  vim.o.cursorline = true
+  vim.o.cursorcolumn = true
 
-vim.o.cursorline = true
-vim.o.cursorcolumn = true
+  vim.o.winborder = "single"
+  vim.o.pumborder = "single"
 
-vim.o.winborder = "single"
-vim.o.pumborder = "single"
+  vim.opt.completeopt = { "menu", "noselect", "popup" }
 
-vim.opt.completeopt = { "menu", "noselect", "popup" }
-
-vim.o.smarttab = true
-vim.o.expandtab = true
-vim.o.tabstop = 2
-vim.o.shiftwidth = 0
-vim.o.softtabstop = -1
-vim.o.smartindent = true
-
-if vim.fn.has("termguicolors") then
-  vim.o.termguicolors = true
-  vim.cmd("colorscheme industry")
-  vim.cmd("highlight Normal guibg=NONE")
-  vim.cmd("highlight NonText guibg=NONE")
-  vim.cmd("highlight EndOfBuffer guibg=NONE")
-  vim.cmd("highlight LineNr guibg=NONE")
+  vim.o.smarttab = true
+  vim.o.expandtab = true
+  vim.o.tabstop = 2
+  vim.o.shiftwidth = 0
+  vim.o.softtabstop = -1
+  vim.o.smartindent = true
 end
 
-vim.keymap.set("n", "<C-[><C-[>", ":nohlsearch<CR>", { silent = true })
+local function set_theme(has_term_gui_colors)
+  if has_term_gui_colors then
+    vim.o.termguicolors = true
+    vim.cmd("colorscheme industry")
+    vim.cmd("highlight Normal guibg=NONE")
+    vim.cmd("highlight NonText guibg=NONE")
+    vim.cmd("highlight EndOfBuffer guibg=NONE")
+    vim.cmd("highlight LineNr guibg=NONE")
+  end
+end
+
+local function set_keymaps()
+  vim.keymap.set("n", "<C-[><C-[>", ":nohlsearch<CR>", { silent = true })
+end
 
 local function enabled_clipboard()
   local function is_wayland()
@@ -83,13 +87,12 @@ local function enabled_clipboard()
     end
   end
 end
-enabled_clipboard()
 
 local function define_auto_mkdir()
   local gid = vim.api.nvim_create_augroup("vimrc_auto_mkdir", {})
   local function auto_mkdir(dir, force)
-    local function prompt(dir)
-      local ans = vim.fn.confirm(string.format('"%s" does not exist. Create?', dir), "&Yes\n&No")
+    local function prompt(dirname)
+      local ans = vim.fn.confirm(string.format('"%s" does not exist. Create?', dirname), "&Yes\n&No")
       return ans == 1
     end
     if vim.fn.isdirectory(dir) == 0 and (force or prompt(dir)) then
@@ -104,7 +107,6 @@ local function define_auto_mkdir()
     end,
   })
 end
-define_auto_mkdir()
 
 local function vim_pack(configs)
   local default_opts = {
@@ -125,8 +127,9 @@ local function vim_pack(configs)
   end)
 end
 
-local efm_enabled = nil
 local function setup_plugins()
+  local M = {}
+
   local github = function(x)
     return "https://github.com/" .. x
   end
@@ -182,7 +185,7 @@ local function setup_plugins()
       {
         spec = github("creativenull/efmls-configs-nvim"),
         init = function()
-          efm_enabled = function()
+          M.efm_enabled = function()
             local stylua = require("efmls-configs.formatters.stylua")
 
             local languages = {
@@ -275,8 +278,9 @@ local function setup_plugins()
 
   install()
   remove()
+
+  return M
 end
-setup_plugins()
 
 local function setup_lsp()
   local function completion_enable(client_id, bufnr)
@@ -336,19 +340,16 @@ local function setup_lsp()
     vim.lsp.enable("pylsp")
   end
 
-  vim.diagnostic.config({
-    virtual_text = true,
-  })
-
   all_client_setting()
   lua_ls()
   pylsp()
-
-  if efm_enabled ~= nil and type(efm_enabled) == "function" then
-    efm_enabled()
-  end
 end
-setup_lsp()
+
+local function setup_diagnostic()
+  vim.diagnostic.config({
+    virtual_text = true,
+  })
+end
 
 local function define_c_style()
   local gid = vim.api.nvim_create_augroup("c", {})
@@ -358,6 +359,29 @@ local function define_c_style()
     command = "setlocal tabstop=4",
   })
 end
-define_c_style()
 
-vim.cmd("filetype plugin indent on")
+local function main()
+  vim.cmd("syntax enable")
+
+  -- basic opts, theme, keymaps, tools and customizes
+  set_vim_opts()
+  enabled_clipboard()
+  set_theme(vim.fn.has("termguicolors") == 1)
+  set_keymaps()
+  define_auto_mkdir()
+
+  -- lsp and diagnostic
+  local m = setup_plugins() or {}
+  setup_lsp()
+  if m.efm_enabled ~= nil and type(m.efm_enabled) == "function" then
+    m.efm_enabled()
+  end
+  setup_diagnostic()
+
+  -- code stylings
+  define_c_style()
+
+  vim.cmd("filetype plugin indent on")
+end
+
+main()
