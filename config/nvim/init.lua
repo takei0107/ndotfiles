@@ -1,3 +1,4 @@
+-- disable rtp plugins
 local function disable_rtp_plugins()
   vim.g.loaded_2html_plugin = 1
   vim.g.loaded_getscriptPlugin = 1
@@ -12,6 +13,7 @@ local function disable_rtp_plugins()
   vim.g.loaded_zipPlugin = 1
 end
 
+-- set basic vim options
 local function set_vim_opts()
   vim.o.compatible = false
   vim.o.belloff = "all"
@@ -54,6 +56,8 @@ local function set_vim_opts()
   vim.o.smartindent = true
 end
 
+-- set main theme
+---@param has_term_gui_colors boolean
 local function set_theme(has_term_gui_colors)
   if has_term_gui_colors then
     vim.o.termguicolors = true
@@ -65,14 +69,18 @@ local function set_theme(has_term_gui_colors)
   end
 end
 
+-- set basic keymaps
 local function set_keymaps()
   vim.keymap.set("n", "<C-[><C-[>", ":nohlsearch<CR>", { silent = true })
 end
 
+---@return boolean
 local function is_wayland()
   return vim.fn.empty(vim.env.WAYLAND_DISPLAY) == 0
 end
 
+-- making available clipboard, if effective clibpoard-tool is installed
+-- :h clipboard-tool
 local function enabled_clipboard()
   local function has_wl_clipboard()
     return vim.fn.executable("wl-copy") == 1 and vim.fn.executable("wl-paste") == 1
@@ -89,8 +97,9 @@ local function enabled_clipboard()
   end
 end
 
+-- making available to make directory, if not exists on file saved
+-- https://vim-jp.org/vim-users-jp/2011/02/20/Hack-202.html
 local function define_auto_mkdir()
-  local gid = vim.api.nvim_create_augroup("vimrc_auto_mkdir", {})
   local function auto_mkdir(dir, force)
     local function prompt(dirname)
       local ans = vim.fn.confirm(string.format('"%s" does not exist. Create?', dirname), "&Yes\n&No")
@@ -100,6 +109,8 @@ local function define_auto_mkdir()
       vim.fn.mkdir(vim.fn.iconv(dir, vim.o.encoding, vim.o.termencoding), "p")
     end
   end
+
+  local gid = vim.api.nvim_create_augroup("vimrc_auto_mkdir", {})
   vim.api.nvim_create_autocmd("BufWritePre", {
     pattern = "*",
     group = gid,
@@ -109,13 +120,23 @@ local function define_auto_mkdir()
   })
 end
 
+---@class RCVimPackConfig: vim.pack.keyset.add
+---@field spec string|vim.pack.Spec
+---@field init? function
+
+-- vim.pack wrapper
+---@param configs RCVimPackConfig[]
 local function vim_pack(configs)
+  ---@type vim.pack.keyset.add
   local default_opts = {
     confirm = false,
   }
 
   local itr = vim.iter(configs)
-  itr:each(function(config)
+  itr:each(function(
+    config --[[@as RCVimPackConfig]]
+  )
+    ---@type vim.pack.keyset.add
     local opts = config.opts and vim.tbl_extend("force", default_opts, config.opts) or default_opts
 
     vim.pack.add({
@@ -128,9 +149,13 @@ local function vim_pack(configs)
   end)
 end
 
+---@return { efm_enabled: function? }
 local function setup_plugins()
+  ---@type { efm_enabled: function? }
   local M = {}
 
+  ---@param x string
+  ---@return string
   local github = function(x)
     return "https://github.com/" .. x
   end
@@ -179,7 +204,9 @@ local function setup_plugins()
             -- [prerequisites]
             -- - pip, venv (for pylsp)
             --   - $ sudo apt install --no-install-recommends python3-pip python3-venv
-            ensure_installed = { "efm", "lua_ls", "pylsp" },
+            -- - node.js (for vtsls)
+            --   - $ mise use -g node
+            ensure_installed = { "efm", "lua_ls", "pylsp", "vtsls" },
           })
         end,
       },
@@ -236,8 +263,6 @@ local function setup_plugins()
             },
             mappings = {
               delete_char = "<C-h>",
-              move_down = "<C-j>",
-              move_up = "<C-k>",
               scroll_left = "<M-h>",
               scroll_right = "<M-l>",
             },
@@ -247,13 +272,29 @@ local function setup_plugins()
           end)
         end,
       },
+      {
+        spec = github("lewis6991/gitsigns.nvim"),
+        init = function()
+          require("gitsigns").setup()
+        end,
+      },
+      {
+        spec = github("nvim-mini/mini.statusline"),
+        init = function()
+          require("mini.statusline").setup({
+            use_icons = false,
+          })
+        end,
+      },
     })
   end
 
   local function remove()
     local deleted_specs = vim
       .iter(vim.pack.get())
-      :filter(function(x)
+      :filter(function(
+        x --[[@as vim.pack.keyset.get]]
+      )
         return not x.active
       end)
       :map(function(x)
@@ -341,9 +382,14 @@ local function setup_lsp()
     vim.lsp.enable("pylsp")
   end
 
+  local function vtsls()
+    vim.lsp.enable("vtsls")
+  end
+
   all_client_setting()
   lua_ls()
   pylsp()
+  vtsls()
 end
 
 local function setup_diagnostic()
@@ -377,6 +423,7 @@ local function main()
   local m = setup_plugins() or {}
   setup_lsp()
   if vim.is_callable(m.efm_enabled) then
+    ---@cast m { efm_enabled: function }
     m.efm_enabled()
   end
   setup_diagnostic()
