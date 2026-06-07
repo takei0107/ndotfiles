@@ -19,6 +19,8 @@ local function set_vim_opts()
   vim.o.belloff = "all"
   vim.o.mouse = ""
 
+  vim.o.autoread = true
+
   local function setup_recovery_files()
     vim.o.swapfile = false
     vim.o.backup = false
