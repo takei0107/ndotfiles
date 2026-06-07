@@ -3,11 +3,20 @@ SHELL = /bin/bash
 PWD = $(shell pwd)
 HOME = $(shell echo $$HOME)
 
-.PHONY: all to_home to_config stylua
+HOME_FILES = .bash_aliases \
+						 .bash_profile \
+						 .bashrc \
+						 .gitconfig \
+						 .vimrc \
+						 .inputrc
+
+SCRIPTS_DIR = ./scripts
+
+.PHONY: all to_home to_config stylua neovim
 
 all: to_home to_config
 
-to_home: .bash_aliases .bash_profile .bashrc .gitconfig .vimrc .inputrc
+to_home: $(HOME_FILES)
 	for target in $^ ; \
 	do \
 		ln -sfv $(addprefix $(PWD)/, $$target) $(addprefix $(HOME)/, $$target) ; \
@@ -20,5 +29,8 @@ to_config: config/*
 		ln -sfnv $(addprefix $(PWD)/config/, $$base) $(addprefix $(HOME)/.config/, $$base) ; \
 	done
 
+neovim: $(SCRIPTS_DIR)/neovim/install.sh
+	$(SHELL) $^
+
 stylua:
-	docker compose run stylua
+	docker compose run --rm stylua
