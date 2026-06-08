@@ -20,6 +20,10 @@
       "rev": "e54f5bf5f12c560da31c17eee5b3e1bd369f3ff9",
       "src": "https://github.com/mason-org/mason.nvim.git"
     },
+    "mini.files": {
+      "rev": "02874bc653fbecf2bee2c65441d0ebd09110f011",
+      "src": "https://github.com/nvim-mini/mini.files"
+    },
     "mini.pick": {
       "rev": "975e398570dd15696575c5374f94e78fd29a7a69",
       "src": "https://github.com/nvim-mini/mini.pick"
@@ -27,6 +31,10 @@
     "mini.statusline": {
       "rev": "7091f554d7d26b5d55f4c937634da53ba277a44a",
       "src": "https://github.com/nvim-mini/mini.statusline"
+    },
+    "mini.tabline": {
+      "rev": "7d4a8a79f37361ad287d27bda0f37fc53f924a50",
+      "src": "https://github.com/nvim-mini/mini.tabline"
     },
     "nvim-lspconfig": {
       "rev": "75e49cfa588a89ca667d767c0afef3ceac205faa",

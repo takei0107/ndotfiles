@@ -256,6 +256,36 @@ local function setup_plugins()
         spec = github("cohama/lexima.vim.git"),
       },
       {
+        spec = github("nvim-mini/mini.files"),
+        init = function()
+          require("mini.files").setup({
+            content = {
+              prefix = function() end,
+            },
+          })
+
+          ---@param args vim.api.keyset.create_autocmd.callback_args
+          local go_in = function(args)
+            vim.keymap.set("n", "l", function()
+              MiniFiles.go_in({
+                close_on_file = true,
+              })
+            end, { buffer = args.data.buf_id })
+          end
+          vim.api.nvim_create_autocmd("User", {
+            pattern = "MiniFilesWindowOpen",
+            callback = go_in,
+          })
+
+          vim.api.nvim_create_user_command("Exproler", function()
+            MiniFiles.open(nil, false)
+          end, {})
+          vim.api.nvim_create_user_command("ExprolerCurrent", function()
+            MiniFiles.open(vim.api.nvim_buf_get_name(0), false)
+          end, {})
+        end,
+      },
+      {
         spec = github("nvim-mini/mini.pick"),
         init = function()
           local minipick = require("mini.pick")
@@ -285,6 +315,14 @@ local function setup_plugins()
         init = function()
           require("mini.statusline").setup({
             use_icons = false,
+          })
+        end,
+      },
+      {
+        spec = github("nvim-mini/mini.tabline"),
+        init = function()
+          require("mini.tabline").setup({
+            show_icons = false,
           })
         end,
       },
