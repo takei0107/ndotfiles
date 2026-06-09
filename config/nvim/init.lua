@@ -258,15 +258,21 @@ local function setup_plugins()
       {
         spec = github("nvim-mini/mini.files"),
         init = function()
+          local mappings = {
+            go_in = "l",
+            go_out = "h",
+          }
+
           require("mini.files").setup({
             content = {
               prefix = function() end,
             },
+            mappings = mappings,
           })
 
           ---@param args vim.api.keyset.create_autocmd.callback_args
           local go_in = function(args)
-            vim.keymap.set("n", "l", function()
+            vim.keymap.set("n", mappings.go_in, function()
               MiniFiles.go_in({
                 close_on_file = true,
               })
@@ -277,11 +283,66 @@ local function setup_plugins()
             callback = go_in,
           })
 
-          vim.api.nvim_create_user_command("Exproler", function()
+          ---@param args vim.api.keyset.create_autocmd.callback_args
+          local go_out = function(callback_args)
+            vim.keymap.set("n", mappings.go_out, function()
+              ---@param args vim.api.keyset.create_autocmd.callback_args
+              local function go_out_only_cwd(args)
+                local entry = MiniFiles.get_fs_entry(args.data.buf_id)
+                if vim.isnil(entry) then
+                  return
+                end
+                ---@cast entry { path: string? }
+                if vim.isnil(entry.path) then
+                  return
+                end
+                ---@cast entry { path: string }
+                local path = entry.path
+                local dirname = vim.fs.dirname(path)
+                if vim.isnil(dirname) then
+                  return
+                end
+                if dirname == vim.fn.getcwd() then
+                  return
+                end
+                MiniFiles.go_out()
+              end
+
+              go_out_only_cwd(callback_args)
+            end, { buffer = callback_args.data.buf_id })
+          end
+          vim.api.nvim_create_autocmd("User", {
+            pattern = "MiniFilesBufferCreate",
+            callback = go_out,
+          })
+
+          vim.api.nvim_create_user_command("Explorer", function()
             MiniFiles.open(nil, false)
           end, {})
-          vim.api.nvim_create_user_command("ExprolerCurrent", function()
+          vim.api.nvim_create_user_command("ExplorerCurrent", function()
             MiniFiles.open(vim.api.nvim_buf_get_name(0), false)
+            local function set_all_ancestor_branches()
+              local state = MiniFiles.get_explorer_state()
+              if vim.isnil(state) then
+                return
+              end
+              ---@cast state { branch: table, depth_focus: number }
+              local branch = {}
+              local current = state.branch[state.depth_focus]
+              local cwd = vim.fn.getcwd()
+              local dir = current
+              while dir ~= cwd do
+                table.insert(branch, dir)
+                dir = vim.fs.dirname(dir)
+              end
+              table.insert(branch, cwd)
+              table.sort(branch)
+              MiniFiles.set_branch(branch, {
+                depth_focus = #branch,
+              })
+            end
+
+            set_all_ancestor_branches()
           end, {})
         end,
       },
@@ -459,8 +520,10 @@ local function main()
   set_keymaps()
   define_auto_mkdir()
 
-  -- lsp and diagnostic
+  -- plugins
   local m = setup_plugins() or {}
+
+  -- lsp and diagnostic
   setup_lsp()
   if vim.is_callable(m.efm_enabled) then
     ---@cast m { efm_enabled: function }
